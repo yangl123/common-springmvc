@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+
+    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="${jms.url}" />
+    </bean>
+    <!--3.配置jmsTemplate(发送消息的实例)和事务管理器-->
+    <bean id="jmsTransactionManager"
+          class="org.springframework.jms.connection.JmsTransactionManager">
+        <property name="connectionFactory" ref="connectionFactory" />
+    </bean>
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="connectionFactory" />
+    </bean>
+    <!--4.注册MessageSender中的ActiveMQQueue activeMQQueue-->
+    <bean id="activeMQQueue" class="org.apache.activemq.command.ActiveMQQueue"
+          autowire="constructor">
+        <constructor-arg value="${jms.test}" />
+    </bean>
+    <!--5 消息发送工厂 -->
+    <bean id="messageSender" class="com.yangle.queue.MessageSender">
+        <property name="jmsTemplate" ref="jmsTemplate"></property>
+        <property name="activeMQQueue" ref="activeMQQueue"></property>
+    </bean>
+    <!--7.实例化监听器-->
+    <bean id="activeMQQueueListener"
+          class="com.yangle.queue.ActiveMQQueueListener" />
+    <!--8.配置监听容器-->
+    <bean id="exampleListenerContainer"
+          class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory" />
+        <property name="destinationName" value="${jms.test}" />
+        <property name="sessionTransacted" value="true" />
+        <property name="messageListener" ref="activeMQQueueListener" />
+    </bean>
+
+
+</beans>
